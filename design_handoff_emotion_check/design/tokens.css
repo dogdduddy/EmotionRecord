@@ -1,0 +1,149 @@
+/* 감정 체크 — design tokens */
+:root {
+  /* Surfaces */
+  --bg: #FBF7F2;
+  --bg-warm: #F8F1E8;
+  --surface: #FFFFFF;
+  --surface-sub: #F5EFE7;
+  --surface-soft: #FBF5ED;
+
+  /* Text */
+  --text-1: #3E2C23;
+  --text-2: #7D6B5F;
+  --text-3: #B5A89C;
+
+  /* Primary (coral) */
+  --primary: #FF8A65;
+  --primary-deep: #E07856;
+  --primary-soft: #FFE3D4;
+  --primary-tint: rgba(255, 138, 101, 0.08);
+
+  /* Accent — sage / lavender */
+  --sage: #A9C4A0;
+  --lavender: #B6A7D6;
+
+  /* Emotion scale (softened saturation) */
+  --emo-1: #7986CB; /* 매우 나쁨 — blue */
+  --emo-2: #9F8FCB; /* 나쁨 — lavender */
+  --emo-3: #B0AAA3; /* 보통 — warm gray */
+  --emo-4: #F2B66D; /* 좋음 — warm yellow */
+  --emo-5: #FF9B7A; /* 매우 좋음 — coral */
+
+  /* Emotion tint backgrounds */
+  --emo-1-tint: #E8EAF6;
+  --emo-2-tint: #EDE7F5;
+  --emo-3-tint: #EFECE8;
+  --emo-4-tint: #FCEFDC;
+  --emo-5-tint: #FFE7DC;
+
+  /* Lines */
+  --line: rgba(62, 44, 35, 0.08);
+  --line-strong: rgba(62, 44, 35, 0.16);
+
+  /* Shadows */
+  --shadow-1: 0 1px 2px rgba(62, 44, 35, 0.04), 0 2px 8px rgba(62, 44, 35, 0.04);
+  --shadow-2: 0 4px 12px rgba(62, 44, 35, 0.08), 0 1px 3px rgba(62, 44, 35, 0.05);
+  --shadow-cta: 0 8px 24px rgba(255, 138, 101, 0.28), 0 2px 6px rgba(224, 120, 86, 0.18);
+}
+
+/* --------------------------------------------------------------- */
+.app {
+  font-family: "Pretendard", "Pretendard Variable", -apple-system,
+    BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif;
+  color: var(--text-1);
+  background: var(--bg);
+  width: 100%;
+  height: 100%;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.app * { box-sizing: border-box; }
+
+/* Android status bar (light) */
+.status-bar {
+  height: 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px 0 22px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: 0;
+}
+.status-bar .right { display: flex; align-items: center; gap: 5px; }
+.status-bar .right svg { display: block; }
+
+.nav-bar {
+  height: 22px;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-bar .pill {
+  width: 110px; height: 4px; border-radius: 2px;
+  background: var(--text-1); opacity: 0.55;
+}
+
+/* Top bar */
+.topbar {
+  height: 52px;
+  display: flex; align-items: center;
+  padding: 0 8px;
+}
+.topbar .icon-btn {
+  width: 44px; height: 44px; display: grid; place-items: center;
+  background: transparent; border: 0; border-radius: 50%;
+  color: var(--text-1); cursor: pointer;
+}
+.topbar .icon-btn:active { background: var(--surface-sub); }
+.topbar .title { flex: 1; font-size: 17px; font-weight: 600; }
+
+/* Buttons */
+.btn-primary {
+  height: 56px; border-radius: 18px; border: 0;
+  font-family: inherit;
+  font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
+  color: #fff;
+  background: linear-gradient(135deg, #FFB28A 0%, #FF8A65 55%, #E07856 100%);
+  box-shadow: var(--shadow-cta);
+  cursor: pointer;
+}
+.btn-primary[disabled] {
+  background: var(--surface-sub);
+  color: var(--text-3);
+  box-shadow: none;
+  cursor: default;
+}
+.btn-ghost {
+  height: 40px; padding: 0 16px; border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  color: var(--text-2); background: var(--surface);
+  cursor: pointer;
+}
+.btn-text {
+  height: 36px; padding: 0 8px; border: 0; background: transparent;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  color: var(--text-2); cursor: pointer;
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow-1);
+  border: 1px solid var(--line);
+}
+.card.editable {
+  border: 1.5px solid var(--primary);
+  box-shadow: 0 6px 20px rgba(255, 138, 101, 0.14);
+}
+
+/* Section header */
+.section-header {
+  font-size: 14px; font-weight: 600; color: var(--text-2);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.01em;
+}
+
+/* Number tabular */
+.num { font-feature-settings: "tnum" 1; font-family: "Inter", "Pretendard", system-ui; }
