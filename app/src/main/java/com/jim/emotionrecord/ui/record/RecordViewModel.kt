@@ -28,7 +28,8 @@ class RecordViewModel @Inject constructor(
 
     // 위젯 타입은 ViewModel 생성 시 1회 랜덤 결정 (config change 에도 유지됨)
     override val container = container<RecordState, RecordSideEffect>(
-        RecordState(widgetType = WidgetType.entries.random())
+        RecordState(widgetType = WidgetType.DIAL)
+//        RecordState(widgetType = WidgetType.entries.random())
     )
 
     fun onEmotionSelected(emotion: Emotion) = intent {

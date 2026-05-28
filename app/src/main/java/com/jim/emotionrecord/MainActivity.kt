@@ -20,10 +20,15 @@ import com.jim.emotionrecord.domain.usecase.DecideStartDestinationUseCase
 import com.jim.emotionrecord.domain.usecase.StartDestination
 import com.jim.emotionrecord.ui.graph.GraphScreen
 import com.jim.emotionrecord.ui.home.HomeScreen
+import com.jim.emotionrecord.ui.landing.LandingScreen
 import com.jim.emotionrecord.ui.navigation.Screen
+import com.jim.emotionrecord.ui.quest.QuestHomeScreen
 import com.jim.emotionrecord.ui.record.RecordScreen
 import com.jim.emotionrecord.ui.theme.EmotionRecordTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -41,51 +46,68 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    var startDestination by remember { mutableStateOf<String?>(null) }
+                    val navController = rememberNavController()
 
-                    LaunchedEffect(Unit) {
-                        val dest = decideStartDestinationUseCase()
-                        startDestination = when (dest) {
-                            StartDestination.RECORD -> Screen.Record.route
-                            StartDestination.HOME   -> Screen.Home.route
-                        }
-                    }
-
-                    if (startDestination != null) {
-                        val navController = rememberNavController()
-
-                        NavHost(
-                            navController    = navController,
-                            startDestination = startDestination!!
-                        ) {
-                            composable(Screen.Record.route) {
-                                RecordScreen(
-                                    onNavigateToHome = {
-                                        navController.navigate(Screen.Home.route) {
-                                            popUpTo(Screen.Record.route) { inclusive = true }
+                    NavHost(
+                        navController    = navController,
+                        startDestination = Screen.Landing.route
+                    ) {
+                        // ── 앱 선택 랜딩 ──────────────────────────────────
+                        composable(Screen.Landing.route) {
+                            LandingScreen(
+                                onSelectFun = {
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        val dest = decideStartDestinationUseCase()
+                                        val startDestination = when (dest) {
+                                            StartDestination.RECORD -> Screen.Record.route
+                                            StartDestination.HOME   -> Screen.Home.route
                                         }
-                                    },
-                                    // 첫 진입(스플래시→기록) 시에는 닫기 버튼 없음
-                                    showCloseButton = startDestination != Screen.Record.route
-                                )
-                            }
-                            composable(Screen.Home.route) {
-                                HomeScreen(
-                                    onNavigateToRecord = {
-                                        navController.navigate(Screen.Record.route)
-                                    },
-                                    onNavigateToGraph = {
-                                        navController.navigate(Screen.Graph.route)
+
+                                        navController.navigate(startDestination)
                                     }
-                                )
-                            }
-                            composable(Screen.Graph.route) {
-                                GraphScreen(
-                                    onNavigateBack = {
-                                        navController.popBackStack()
+                                },
+                                onSelectQuest = {
+                                    navController.navigate(Screen.QuestHome.route)
+                                }
+                            )
+                        }
+
+                        // ── 재밌는 감정 기록 앱 ───────────────────────────
+                        composable(Screen.Home.route) {
+                            HomeScreen(
+                                onNavigateToRecord = {
+                                    navController.navigate(Screen.Record.route)
+                                },
+                                onNavigateToGraph = {
+                                    navController.navigate(Screen.Graph.route)
+                                }
+                            )
+                        }
+                        composable(Screen.Record.route) {
+                            RecordScreen(
+                                onNavigateToHome = {
+                                    navController.navigate(Screen.Home.route) {
+                                        popUpTo(Screen.Record.route) { inclusive = true }
                                     }
-                                )
-                            }
+                                },
+                                showCloseButton = true
+                            )
+                        }
+                        composable(Screen.Graph.route) {
+                            GraphScreen(
+                                onNavigateBack = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
+
+                        // ── 퀘스트 감정 기록 앱 ───────────────────────────
+                        composable(Screen.QuestHome.route) {
+                            QuestHomeScreen(
+                                onNavigateBack = {
+                                    navController.popBackStack()
+                                }
+                            )
                         }
                     }
                 }

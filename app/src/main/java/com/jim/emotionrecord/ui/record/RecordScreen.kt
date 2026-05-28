@@ -138,8 +138,7 @@ fun RecordScreen(
                     .fillMaxWidth()
                     .height(320.dp)
             ) {
-                when (WidgetType.DIAL) {
-//                when (state.widgetType) {
+                when (state.widgetType) {
                     WidgetType.DIAL  -> DialWidget(
                         selectedEmotion = state.selectedEmotion,
                         onEmotionSelected = viewModel::onEmotionSelected
@@ -193,7 +192,7 @@ private fun TitleSection(
         when (widgetType) {
             WidgetType.DIAL -> {
                 Text(
-                    text = "다이얼을 돌려 감정을 골라보세요",
+                    text = "다이얼을 돌려\n감정을 골라보세요",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight(800),
                     color = Text1,
