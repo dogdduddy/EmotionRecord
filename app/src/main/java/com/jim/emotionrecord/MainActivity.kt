@@ -18,11 +18,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jim.emotionrecord.domain.usecase.DecideStartDestinationUseCase
 import com.jim.emotionrecord.domain.usecase.StartDestination
+import com.jim.emotionrecord.quest.ui.QuestRouterScreen
+import com.jim.emotionrecord.quest.ui.map.QuestMapScreen
+import com.jim.emotionrecord.quest.ui.record.QuestRecordScreen
 import com.jim.emotionrecord.ui.graph.GraphScreen
 import com.jim.emotionrecord.ui.home.HomeScreen
 import com.jim.emotionrecord.ui.landing.LandingScreen
 import com.jim.emotionrecord.ui.navigation.Screen
-import com.jim.emotionrecord.ui.quest.QuestHomeScreen
 import com.jim.emotionrecord.ui.record.RecordScreen
 import com.jim.emotionrecord.ui.theme.EmotionRecordTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -67,7 +69,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onSelectQuest = {
-                                    navController.navigate(Screen.QuestHome.route)
+                                    navController.navigate(Screen.QuestRouter.route)
                                 }
                             )
                         }
@@ -102,10 +104,35 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // ── 퀘스트 감정 기록 앱 ───────────────────────────
-                        composable(Screen.QuestHome.route) {
-                            QuestHomeScreen(
-                                onNavigateBack = {
-                                    navController.popBackStack()
+                        composable(Screen.QuestRouter.route) {
+                            QuestRouterScreen(
+                                onNavigateToRecord = {
+                                    navController.navigate(Screen.QuestRecord.route) {
+                                        popUpTo(Screen.QuestRouter.route) { inclusive = true }
+                                    }
+                                },
+                                onNavigateToMap = {
+                                    navController.navigate(Screen.QuestMap.route) {
+                                        popUpTo(Screen.QuestRouter.route) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable(Screen.QuestRecord.route) {
+                            QuestRecordScreen(
+                                fromMap = false,
+                                onNavigateToMap = {
+                                    navController.navigate(Screen.QuestMap.route) {
+                                        popUpTo(Screen.QuestRecord.route) { inclusive = true }
+                                    }
+                                },
+                                onClose = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.QuestMap.route) {
+                            QuestMapScreen(
+                                onNavigateToRecord = {
+                                    navController.navigate(Screen.QuestRecord.route)
                                 }
                             )
                         }
