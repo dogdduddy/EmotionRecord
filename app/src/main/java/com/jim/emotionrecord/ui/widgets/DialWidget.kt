@@ -54,11 +54,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jim.emotionrecord.domain.model.Emotion
 import com.jim.emotionrecord.ui.common.EmotionFace
+import com.jim.emotionrecord.ui.theme.EmotionRecordTheme
 import com.jim.emotionrecord.ui.theme.PrimaryDeep
 import com.jim.emotionrecord.ui.theme.Text3
 import com.jim.emotionrecord.ui.theme.emotionColor
@@ -92,6 +94,17 @@ private fun Vibrator.confirm() {
         vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
     } else {
         vibrate(VibrationEffect.createOneShot(25L, 200))
+    }
+}
+
+@Preview
+@Composable
+fun DialWidgetPreview() {
+    EmotionRecordTheme {
+        DialWidget(
+            null,
+            {},
+        )
     }
 }
 
@@ -173,6 +186,8 @@ fun DialWidget(
     val orbitRadiusDp    = containerSize / 2f - 40.dp        // = 110dp (was 96dp)
     val faceTokenDp      = 60.dp
     val centerPreviewDp  = 132.dp
+
+    val baseYOffset = 40f
 
     val orbitRadiusPx = with(density) { orbitRadiusDp.toPx() }
     val containerPx   = with(density) { containerSize.toPx() }
@@ -280,6 +295,26 @@ fun DialWidget(
             )
         }
 
+        Canvas(
+            modifier = Modifier
+                .size(width = 20.dp, height = 12.dp)
+                .align(Alignment.TopCenter)
+//                .offset(y = (containerSize / 2f - orbitRadiusDp - 14.dp))
+        ) {
+            val mid = size.width / 2f
+            val sw = Stroke(
+                width = 10f,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round
+            )
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(0f, 0f)
+                lineTo(mid, size.height)
+                lineTo(size.width, 0f)
+            }
+            drawPath(path, PrimaryDeep, style = sw)
+        }
+
         // 5개 face 토큰
         emotions.forEachIndexed { idx, emotion ->
             val baseAngleDeg  = -90f + idx * STEP_DEG
@@ -287,7 +322,7 @@ fun DialWidget(
             val rad = (totalAngleDeg * (PI / 180.0))
 
             val fx = (orbitRadiusPx * cos(rad)).toFloat()
-            val fy = (orbitRadiusPx * sin(rad)).toFloat()
+            val fy = (orbitRadiusPx * sin(rad)).toFloat() + baseYOffset
 
             val isSelected   = emotion == selectedEmotion
             val tokenSizeDp  = if (isSelected) 72.dp else faceTokenDp
@@ -324,6 +359,7 @@ fun DialWidget(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
+                .offset { IntOffset(0f.roundToInt(), baseYOffset.roundToInt()) }
                 .size(centerPreviewDp)
                 .clip(CircleShape)
                 .background(
