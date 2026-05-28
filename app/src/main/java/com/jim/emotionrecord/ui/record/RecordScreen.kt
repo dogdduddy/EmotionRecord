@@ -114,16 +114,20 @@ fun RecordScreen(
                 .padding(horizontal = 24.dp, vertical = 8.dp)
         ) {
             // 타이틀 & 부제목 (상태별 변화)
-            AnimatedContent(
-                targetState = state.selectedEmotion,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "title_anim"
-            ) { selectedEmotion ->
-                TitleSection(
-                    widgetType = state.widgetType,
-                    selectedEmotion = selectedEmotion
-                )
-            }
+//            AnimatedContent(
+//                targetState = state.selectedEmotion,
+//                transitionSpec = { fadeIn() togetherWith fadeOut() },
+//                label = "title_anim"
+//            ) { selectedEmotion ->
+//                TitleSection(
+//                    widgetType = state.widgetType,
+//                    selectedEmotion = selectedEmotion
+//                )
+//            }
+            TitleSection(
+                widgetType = state.widgetType,
+                selectedEmotion = state.selectedEmotion
+            )
 
             Spacer(Modifier.height(24.dp))
 
@@ -188,41 +192,28 @@ private fun TitleSection(
     ) {
         when (widgetType) {
             WidgetType.DIAL -> {
-                if (selectedEmotion == null) {
-                    Text(
-                        text = "지금 기분은\n어떠세요?",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight(800),
-                        color = Text1,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = "다이얼을 돌려 감정을 골라보세요",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Text3,
-                        textAlign = TextAlign.Center
-                    )
-                } else {
-                    Text(
-                        buildAnnotatedString {
-                            withStyle(SpanStyle(color = emotionColor(selectedEmotion.score), fontWeight = FontWeight(800))) {
-                                append(selectedEmotion.label)
-                            }
-                            withStyle(SpanStyle(color = Text1, fontWeight = FontWeight(800))) {
-                                append("으로\n맞추셨어요")
-                            }
-                        },
-                        style = MaterialTheme.typography.titleLarge,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = "확실하면 아래 버튼을 눌러주세요",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Text3,
-                        textAlign = TextAlign.Center
-                    )
+                Text(
+                    text = "다이얼을 돌려 감정을 골라보세요",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight(800),
+                    color = Text1,
+                    textAlign = TextAlign.Center
+                )
+                if (selectedEmotion != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(emotionColor(selectedEmotion.score).copy(alpha = 0.12f))
+                            .padding(horizontal = 12.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = selectedEmotion.label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight(600),
+                            color = emotionColor(selectedEmotion.score)
+                        )
+                    }
                 }
             }
             WidgetType.REEL -> {

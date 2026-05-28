@@ -25,18 +25,18 @@ val Line       = Color(0x143E2C23)    // alpha 8%
 val LineStrong = Color(0x293E2C23)    // alpha 16%
 
 // ─── Emotion scale (softened saturation) ────────────────────────────────────
-val Emo1 = Color(0xFF7986CB)   // 매우 나쁨 — indigo
-val Emo2 = Color(0xFF9F8FCB)   // 나쁨 — lavender
-val Emo3 = Color(0xFFB0AAA3)   // 보통 — warm gray
-val Emo4 = Color(0xFFF2B66D)   // 좋음 — warm yellow
-val Emo5 = Color(0xFFFF9B7A)   // 매우 좋음 — coral
+val Emo1 = Color(0xFF626B66)   // 매우 나쁨 — indigo
+val Emo2 = Color(0xFFFF9B7A)   // 나쁨 — lavender
+val Emo3 = Color(0xFF63A16B)   // 보통 — warm gray
+val Emo4 = Color(0xFFB1CE86)   // 좋음 — warm yellow
+val Emo5 = Color(0xFFE8D685)   // 매우 좋음 — coral
 
 // Emotion tint backgrounds
-val Emo1Tint = Color(0xFFE8EAF6)
-val Emo2Tint = Color(0xFFEDE7F5)
-val Emo3Tint = Color(0xFFEFECE8)
-val Emo4Tint = Color(0xFFFCEFDC)
-val Emo5Tint = Color(0xFFFFE7DC)
+val Emo1Tint = Color(0xFFFFFFFF)
+val Emo2Tint = Color(0xFFFFFFFF)
+val Emo3Tint = Color(0xFFFFFFFF)
+val Emo4Tint = Color(0xFFFFFFFF)
+val Emo5Tint = Color(0xFFFFFFFF)
 
 // Emotion ink (dark, for text on tint)
 val Emo1Ink = Color(0xFF3D4783)
