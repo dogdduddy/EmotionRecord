@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +29,7 @@ import com.jim.emotionrecord.ui.landing.LandingScreen
 import com.jim.emotionrecord.ui.navigation.Screen
 import com.jim.emotionrecord.ui.record.RecordScreen
 import com.jim.emotionrecord.ui.theme.EmotionRecordTheme
+import com.jim.emotionrecord.ui.theme.QBg
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -126,6 +129,15 @@ class MainActivity : ComponentActivity() {
                                         popUpTo(Screen.QuestRecord.route) { inclusive = true }
                                     }
                                 },
+                                onNavigateToMission = { level ->
+                                    val route = when (level.toIntOrNull()) {
+                                        1, 2 -> Screen.QuestMissionBreath.route
+                                        3 -> Screen.QuestMissionGratitude.route.replace("{question}", "작은 성취")
+                                        4, 5 -> Screen.QuestMissionGratitude.route.replace("{question}", "감사한 것")
+                                        else -> Screen.QuestMissionWarm.route
+                                    }
+                                    navController.navigate(route)
+                                },
                                 onClose = { navController.popBackStack() }
                             )
                         }
@@ -135,6 +147,21 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Screen.QuestRecord.route)
                                 }
                             )
+                        }
+
+                        // ── 퀘스트 미션 ──────────────────────────────────
+                        composable(Screen.QuestMissionBreath.route) {
+                            // TODO: MissionBreathScreen (STEP 5)
+                            Box(modifier = Modifier.fillMaxSize().background(QBg))
+                        }
+                        composable(Screen.QuestMissionGratitude.route) { backStackEntry ->
+                            val question = backStackEntry.arguments?.getString("question") ?: "감사한 것"
+                            // TODO: MissionGratitudeScreen (STEP 5)
+                            Box(modifier = Modifier.fillMaxSize().background(QBg))
+                        }
+                        composable(Screen.QuestMissionWarm.route) {
+                            // TODO: MissionWarmScreen (STEP 5)
+                            Box(modifier = Modifier.fillMaxSize().background(QBg))
                         }
                     }
                 }
