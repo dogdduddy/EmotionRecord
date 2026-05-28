@@ -262,7 +262,10 @@ fun DialWidget(
             }
     ) {
         // 배경 halo + 점선 orbit ring
-        Canvas(modifier = Modifier.fillMaxSize()) {
+        Canvas(modifier = Modifier
+            .offset { IntOffset(0f.roundToInt(), baseYOffset.roundToInt()) }
+            .fillMaxSize()
+        ) {
             val cx      = size.width / 2f
             val cy      = size.height / 2f
             val orbitR  = orbitRadiusPx
@@ -287,9 +290,9 @@ fun DialWidget(
                 radius = orbitR,
                 center = Offset(cx, cy),
                 style  = Stroke(
-                    width = 1.dp.toPx(),
+                    width = 2.dp.toPx(),
                     pathEffect = PathEffect.dashPathEffect(
-                        intervals = floatArrayOf(2.dp.toPx(), 6.dp.toPx())
+                        intervals = floatArrayOf(6.dp.toPx(), 4.dp.toPx())
                     )
                 )
             )
@@ -299,7 +302,6 @@ fun DialWidget(
             modifier = Modifier
                 .size(width = 20.dp, height = 12.dp)
                 .align(Alignment.TopCenter)
-//                .offset(y = (containerSize / 2f - orbitRadiusDp - 14.dp))
         ) {
             val mid = size.width / 2f
             val sw = Stroke(
