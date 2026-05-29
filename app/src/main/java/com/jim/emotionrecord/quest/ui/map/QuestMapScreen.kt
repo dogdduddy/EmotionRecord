@@ -37,25 +37,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.jim.emotionrecord.quest.domain.model.DayStamp
 import com.jim.emotionrecord.quest.domain.model.SectionData
 import com.jim.emotionrecord.quest.ui.common.QuestPrimaryButton
 import com.jim.emotionrecord.ui.theme.QBg
 import com.jim.emotionrecord.ui.theme.QBgPaper
-import com.jim.emotionrecord.ui.theme.QLine
 import com.jim.emotionrecord.ui.theme.QLineStrong
-import com.jim.emotionrecord.ui.theme.QPrimary
 import com.jim.emotionrecord.ui.theme.QPrimaryDeep
 import com.jim.emotionrecord.ui.theme.QText1
 import com.jim.emotionrecord.ui.theme.QText2
@@ -63,12 +57,12 @@ import com.jim.emotionrecord.ui.theme.QText3
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
-// 지그재그 컬럼 패턴 (5컬럼 기준, 인덱스 1~5)
+// 지그재그 컬럼 패턴 (5컬럼 기준, 인덱스 0~6: 월~일)
 private val COL_PATTERN = intArrayOf(2, 3, 4, 3, 2, 1, 2)
 private val STAMP_SIZE  = 72.dp
 private val CELL_H      = 110.dp
-private val PAD_TOP     = 72.dp   // 잠금 카드 여백
-private val PAD_BOT     = 84.dp   // 섹션 시작 리본 여백
+private val PAD_TOP     = 100.dp   // 상단 잠금 카드 영역 여백
+private val PAD_BOT     = 84.dp    // 하단 시작 리본 여백
 
 @Composable
 fun QuestMapScreen(
@@ -78,7 +72,7 @@ fun QuestMapScreen(
 ) {
     val state by viewModel.collectAsState()
 
-    // 진입마다 새로 고침 (미션 완료 후 복귀 포함)
+    // 진입마다 새로 고침
     LaunchedEffect(Unit) { viewModel.refresh() }
 
     viewModel.collectSideEffect { effect ->
@@ -88,7 +82,10 @@ fun QuestMapScreen(
     }
 
     Scaffold(
-        topBar = { MapTopBar(state.sectionData, onSeedData = { viewModel.seedData() }) },
+        topBar = {
+            val currentSection = state.sections.lastOrNull()
+            MapTopBar(currentSection, onSeedData = { viewModel.seedData() })
+        },
         containerColor = QBg,
     ) { padding ->
         Column(
@@ -104,15 +101,14 @@ fun QuestMapScreen(
                     .clip(RoundedCornerShape(22.dp))
                     .background(QBgPaper),
             ) {
-                val section = state.sectionData
-                if (section != null) {
-                    MapContent(sectionData = section, justStamped = justStamped)
+                if (state.sections.isNotEmpty()) {
+                    MapContent(sections = state.sections, justStamped = justStamped)
                 }
             }
 
             // 하단 CTA
             BottomCta(
-                todayRecorded = state.sectionData?.todayRecorded ?: false,
+                todayRecorded = state.sections.lastOrNull()?.todayRecorded ?: false,
                 isLoading     = state.isLoading,
                 onClick       = { viewModel.onGoToRecord() },
             )
@@ -146,17 +142,12 @@ private fun MapTopBar(section: SectionData?, onSeedData: () -> Unit) {
             }
         },
         actions = {
-            // DEBUG: 시드 데이터 버튼
-            androidx.compose.material3.TextButton(onClick = onSeedData) {
-                Text(
-                    text      = "SEED",
-                    fontSize  = 11.sp,
-                    fontWeight = FontWeight(700),
-                    color     = QText3,
-                    letterSpacing = 0.8.sp,
-                )
+            IconButton(onClick = onSeedData) {
+                Canvas(modifier = Modifier.size(18.dp)) {
+                    drawCircle(QText3, style = Stroke(2.dp.toPx()))
+                }
             }
-            // 그래프 버튼 (TIER 2 — placeholder)
+            // 그래프 버튼 (TIER 2)
             IconButton(onClick = {}, enabled = false) {
                 Canvas(modifier = Modifier.size(22.dp)) {
                     val w = size.width; val h = size.height
@@ -174,22 +165,26 @@ private fun MapTopBar(section: SectionData?, onSeedData: () -> Unit) {
 // ── 지도 콘텐츠 ───────────────────────────────────────────────────────────────
 
 @Composable
-private fun MapContent(sectionData: SectionData, justStamped: Boolean) {
-    val stamps    = sectionData.stamps
-    val n         = stamps.size.coerceAtLeast(1)
-    val totalH    = PAD_TOP + CELL_H * (n - 1).toFloat() + PAD_BOT
+private fun MapContent(sections: List<SectionData>, justStamped: Boolean) {
+    val sectionH      = CELL_H * 7
+    val totalH        = PAD_TOP + sectionH * sections.size + PAD_BOT
 
     val scrollState   = rememberScrollState()
     val density       = LocalDensity.current
     val configuration = LocalConfiguration.current
 
+    val allStamps = sections.flatMap { it.stamps }
+
     // 오늘 스탬프가 화면 중앙에 오도록 초기 스크롤
-    LaunchedEffect(sectionData.todayStampIndex) {
-        val idx = sectionData.todayStampIndex ?: return@LaunchedEffect
-        val todayCenterY = totalH - PAD_BOT - CELL_H * idx.toFloat()
+    LaunchedEffect(sections) {
+        val currentSection = sections.lastOrNull() ?: return@LaunchedEffect
+        val todayIdxInSection = currentSection.todayStampIndex ?: 0
+        val totalTodayIdx = (sections.size - 1) * 7 + todayIdxInSection
+        
+        val todayCenterY = totalH - PAD_BOT - CELL_H * totalTodayIdx.toFloat()
         val screenH = configuration.screenHeightDp.dp
-        val targetDp = (todayCenterY - screenH / 2 + 60.dp).coerceAtLeast(0.dp)
-        with(density) { scrollState.animateScrollTo(targetDp.roundToPx()) }
+        val targetDp = (todayCenterY - screenH / 2 + 100.dp).coerceAtLeast(0.dp)
+        scrollState.scrollTo(with(density) { targetDp.roundToPx() })
     }
 
     Box(
@@ -197,7 +192,7 @@ private fun MapContent(sectionData: SectionData, justStamped: Boolean) {
             .fillMaxSize()
             .verticalScroll(scrollState),
     ) {
-        // 점선 트레일 + 배경 (Canvas 한 번으로)
+        // 점선 트레일 + 배경
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
@@ -206,21 +201,19 @@ private fun MapContent(sectionData: SectionData, justStamped: Boolean) {
             val mapW = size.width
             val colGap = mapW / 6f
 
-            // 희미한 점 격자 (paper texture)
+            // 희미한 점 격자
             val gridPx = 14.dp.toPx()
             val dotR   = 0.9.dp.toPx()
             val dotC   = Color(0x0A3B2A20)
-            val cols   = (mapW / gridPx).toInt() + 2
-            val rows   = (size.height / gridPx).toInt() + 2
-            repeat(rows + 1) { r ->
-                repeat(cols + 1) { c ->
+            repeat((size.height / gridPx).toInt() + 2) { r ->
+                repeat((mapW / gridPx).toInt() + 2) { c ->
                     drawCircle(dotC, dotR, Offset(7.dp.toPx() + c * gridPx, 7.dp.toPx() + r * gridPx))
                 }
             }
 
-            // 점선 트레일
-            if (stamps.size > 1) {
-                val pts = stamps.mapIndexed { i, s ->
+            // 전체 트레일
+            if (allStamps.size > 1) {
+                val pts = allStamps.mapIndexed { i, s ->
                     Offset(
                         x = COL_PATTERN[s.dayIndex % 7] * colGap,
                         y = (totalH - PAD_BOT - CELL_H * i.toFloat()).toPx(),
@@ -242,14 +235,12 @@ private fun MapContent(sectionData: SectionData, justStamped: Boolean) {
 
         // 잠금 카드 (다음 섹션)
         NextSectionLock(
-            weekNumber = sectionData.weekNumber + 1,
+            weekNumber = (sections.lastOrNull()?.weekNumber ?: 0) + 1,
             modifier   = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 10.dp),
+                .padding(top = 24.dp),
         )
 
-        // 스탬프 + 요일 레이블
-        // 화면 너비 - 좌우 패딩 32dp(MapContent 부모의 horizontal 16dp*2)로 맵 너비 근사
         val approxMapW = (configuration.screenWidthDp - 32).dp
         val colGapDp   = approxMapW / 6
 
@@ -258,42 +249,46 @@ private fun MapContent(sectionData: SectionData, justStamped: Boolean) {
                 .fillMaxWidth()
                 .height(totalH),
         ) {
-            stamps.forEachIndexed { i, stamp ->
-                val xCenter = colGapDp * COL_PATTERN[stamp.dayIndex % 7].toFloat()
-                val yCenter = totalH - PAD_BOT - CELL_H * i.toFloat()
-                val tilt    = when (i % 3) { 0 -> -2.5f; 1 -> 1.5f; else -> -1f }
-
-                EmotionStamp(
-                    stamp          = stamp,
-                    size           = STAMP_SIZE,
-                    tiltDegrees    = tilt,
-                    animateLanding = justStamped && stamp.isToday,
-                    modifier       = Modifier.offset(
-                        x = xCenter - STAMP_SIZE / 2,
-                        y = yCenter - STAMP_SIZE / 2,
-                    ),
-                )
-
-                Text(
-                    text       = stamp.label,
-                    fontSize   = 11.sp,
-                    fontWeight = FontWeight(600),
-                    color      = if (stamp.isToday) QPrimaryDeep else QText3,
-                    textAlign  = TextAlign.Center,
+            sections.forEachIndexed { sIdx, section ->
+                // 섹션 시작 리본 (각 섹션 하단)
+                val ribbonY = totalH - PAD_BOT - sectionH * sIdx - 10.dp
+                SectionStartRibbon(
+                    weekNumber = section.weekNumber,
                     modifier   = Modifier
-                        .offset(x = xCenter - STAMP_SIZE / 2, y = yCenter + STAMP_SIZE / 2 + 4.dp)
-                        .width(STAMP_SIZE),
+                        .align(Alignment.TopCenter)
+                        .offset(y = ribbonY),
                 )
+
+                section.stamps.forEachIndexed { i, stamp ->
+                    val globalIdx = sIdx * 7 + i
+                    val xCenter = colGapDp * COL_PATTERN[stamp.dayIndex % 7].toFloat()
+                    val yCenter = totalH - PAD_BOT - CELL_H * globalIdx.toFloat()
+                    val tilt    = when (globalIdx % 3) { 0 -> -2.5f; 1 -> 1.5f; else -> -1f }
+
+                    EmotionStamp(
+                        stamp          = stamp,
+                        size           = STAMP_SIZE,
+                        tiltDegrees    = tilt,
+                        animateLanding = justStamped && stamp.isToday,
+                        modifier       = Modifier.offset(
+                            x = xCenter - STAMP_SIZE / 2,
+                            y = yCenter - STAMP_SIZE / 2,
+                        ),
+                    )
+
+                    Text(
+                        text       = stamp.label,
+                        fontSize   = 11.sp,
+                        fontWeight = FontWeight(600),
+                        color      = if (stamp.isToday) QPrimaryDeep else QText3,
+                        textAlign  = TextAlign.Center,
+                        modifier   = Modifier
+                            .offset(x = xCenter - STAMP_SIZE / 2, y = yCenter + STAMP_SIZE / 2 + 4.dp)
+                            .width(STAMP_SIZE),
+                    )
+                }
             }
         }
-
-        // 섹션 시작 리본
-        SectionStartRibbon(
-            weekNumber = sectionData.weekNumber,
-            modifier   = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 18.dp),
-        )
     }
 }
 
@@ -310,18 +305,14 @@ private fun NextSectionLock(weekNumber: Int, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .size(52.dp)
                 .clip(CircleShape)
-                .background(Color(0x1AB5A89B))
-                .clip(CircleShape),
+                .background(Color(0x1AB5A89B)),
         ) {
-            // 자물쇠 아이콘 (Canvas)
             Canvas(modifier = Modifier.size(22.dp)) {
                 val w = size.width; val h = size.height
                 val stroke = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round)
                 val color = Color(0xFF7A6A5E)
-                // 몸통
                 drawRoundRect(color, Offset(w*0.2f, h*0.46f), androidx.compose.ui.geometry.Size(w*0.6f, h*0.46f),
                     androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()), style = stroke)
-                // 고리
                 val path = Path().apply {
                     moveTo(w*0.34f, h*0.46f); lineTo(w*0.34f, h*0.34f)
                     quadraticTo(w*0.34f, h*0.10f, w*0.5f, h*0.10f)

@@ -112,6 +112,7 @@ fun EmotionStamp(
             StampState.MISSION  -> MissionStamp(stamp.emotion, size)
             StampState.SKIPPED  -> SkippedMark(size)
             StampState.TODAY    -> TodayMark(size)
+            StampState.FUTURE   -> FutureMark(size)
             StampState.LOCKED   -> Unit
         }
     }
@@ -219,14 +220,70 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.sparkle(
 
 @Composable
 private fun SkippedMark(size: Dp) {
-    Canvas(modifier = Modifier.size(size * 0.5f)) {
-        val w = this.size.width
-        val h = this.size.height
-        val stroke = Stroke(width = 2.4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-        val color = Color(0xFFB5A89B).copy(alpha = 0.55f)
-        // two faded dashes — "—"
-        drawLine(color, Offset(w * 0.15f, h / 2f), Offset(w * 0.42f, h / 2f), strokeWidth = stroke.width)
-        drawLine(color, Offset(w * 0.58f, h / 2f), Offset(w * 0.85f, h / 2f), strokeWidth = stroke.width)
+    val discSize = size * 0.78f
+    val textMeasurer = rememberTextMeasurer()
+    val grey = Color(0xFFB5A89B)
+
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(discSize)) {
+        Canvas(modifier = Modifier.size(discSize)) {
+            val r = this.size.width / 2f
+            val c = Offset(r, r)
+            // 점선 테두리 (회색)
+            drawCircle(
+                color = grey.copy(alpha = 0.6f),
+                radius = r - 1.dp.toPx(),
+                center = c,
+                style = Stroke(
+                    width = 1.8.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(
+                        floatArrayOf(4.dp.toPx(), 4.dp.toPx()), 0f
+                    )
+                ),
+            )
+            // "?" 텍스트 (회색)
+            val layout = textMeasurer.measure(
+                text  = "?",
+                style = TextStyle(
+                    fontSize   = (discSize.toPx() * 0.40f / density).sp,
+                    fontWeight = FontWeight(700),
+                    color      = grey.copy(alpha = 0.7f),
+                )
+            )
+            drawText(
+                textLayoutResult = layout,
+                topLeft = Offset(
+                    c.x - layout.size.width / 2f,
+                    c.y - layout.size.height / 2f,
+                ),
+            )
+        }
+    }
+}
+
+// ── FUTURE ──────────────────────────────────────────────────────────────────
+
+@Composable
+private fun FutureMark(size: Dp) {
+    val discSize = size * 0.78f
+    val grey = Color(0xFFB5A89B)
+
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(discSize)) {
+        Canvas(modifier = Modifier.size(discSize)) {
+            val r = this.size.width / 2f
+            val c = Offset(r, r)
+            // 점선 테두리만 (더 연한 회색)
+            drawCircle(
+                color = grey.copy(alpha = 0.35f),
+                radius = r - 1.dp.toPx(),
+                center = c,
+                style = Stroke(
+                    width = 1.6.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(
+                        floatArrayOf(4.dp.toPx(), 6.dp.toPx()), 0f
+                    )
+                ),
+            )
+        }
     }
 }
 
