@@ -42,14 +42,18 @@ fun MissionBreathScreen(
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "breathing")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.18f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(4000, easing = EaseInOutSine),
-            repeatMode = RepeatMode.Reverse
-        ),
+    var isInhale by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        isInhale = true
+        while (true) {
+            kotlinx.coroutines.delay(4000)
+            isInhale = !isInhale
+        }
+    }
+
+    val scale by animateFloatAsState(
+        targetValue = if (isInhale) 1.18f else 1f,
+        animationSpec = tween(4000, easing = EaseInOutSine),
         label = "scale"
     )
 
@@ -116,7 +120,7 @@ fun MissionBreathScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = if (scale > 1.09f) "EXHALE" else "INHALE",
+                            text = if (isInhale) "INHALE" else "EXHALE",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = QPrimaryDeep,
@@ -124,7 +128,7 @@ fun MissionBreathScreen(
                         )
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            text = if (scale > 1.09f) "내쉬세요" else "들이쉬세요",
+                            text = if (isInhale) "들이쉬세요" else "내쉬세요",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = QText1
