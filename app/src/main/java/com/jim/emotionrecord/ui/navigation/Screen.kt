@@ -21,6 +21,7 @@ sealed class Screen(val route: String) {
         fun withJustStamped() = "$route?justStamped=true"
         const val COMPOSABLE_ROUTE = "quest_map?justStamped={justStamped}"
     }
+    data object QuestGraph : Screen("quest_graph")
     data object QuestMissionBreath    : Screen("quest_mission_breath/{recordId}")
     data object QuestMissionGratitude : Screen("quest_mission_gratitude/{recordId}/{question}")
     data object QuestMissionWarm      : Screen("quest_mission_warm/{recordId}")

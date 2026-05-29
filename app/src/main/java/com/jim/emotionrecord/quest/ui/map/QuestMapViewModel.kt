@@ -17,6 +17,7 @@ data class QuestMapState(
 
 sealed interface QuestMapEffect {
     data object NavigateToRecord : QuestMapEffect
+    data object NavigateToGraph  : QuestMapEffect
 }
 
 @HiltViewModel
@@ -46,5 +47,9 @@ class QuestMapViewModel @Inject constructor(
 
     fun onGoToRecord() = intent {
         postSideEffect(QuestMapEffect.NavigateToRecord)
+    }
+
+    fun onGraphClick() = intent {
+        postSideEffect(QuestMapEffect.NavigateToGraph)
     }
 }

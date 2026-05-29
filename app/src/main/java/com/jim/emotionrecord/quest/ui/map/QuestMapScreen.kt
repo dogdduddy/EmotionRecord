@@ -75,6 +75,7 @@ private val PAD_BOT     = 84.dp    // 하단 시작 리본 여백
 fun QuestMapScreen(
     justStamped: Boolean = false,
     onNavigateToRecord: () -> Unit = {},
+    onNavigateToGraph: () -> Unit = {},
     viewModel: QuestMapViewModel = hiltViewModel(),
 ) {
     val state by viewModel.collectAsState()
@@ -86,6 +87,7 @@ fun QuestMapScreen(
     viewModel.collectSideEffect { effect ->
         when (effect) {
             QuestMapEffect.NavigateToRecord -> onNavigateToRecord()
+            QuestMapEffect.NavigateToGraph  -> onNavigateToGraph()
         }
     }
 
@@ -94,7 +96,8 @@ fun QuestMapScreen(
             val currentSection = state.sections.lastOrNull()
             MapTopBar(
                 section    = currentSection,
-                onSeedData = { showSeedDialog = true }
+                onSeedData = { showSeedDialog = true },
+                onGraphClick = { viewModel.onGraphClick() }
             )
         },
         containerColor = QBg,
@@ -167,7 +170,11 @@ private fun SeedSelectionDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MapTopBar(section: SectionData?, onSeedData: () -> Unit) {
+private fun MapTopBar(
+    section: SectionData?,
+    onSeedData: () -> Unit,
+    onGraphClick: () -> Unit
+) {
     TopAppBar(
         title = {
             if (section != null) {
@@ -194,8 +201,8 @@ private fun MapTopBar(section: SectionData?, onSeedData: () -> Unit) {
                     drawCircle(QText3, style = Stroke(2.dp.toPx()))
                 }
             }
-            // 그래프 버튼 (TIER 2)
-            IconButton(onClick = {}, enabled = false) {
+            // 그래프 버튼
+            IconButton(onClick = onGraphClick) {
                 Canvas(modifier = Modifier.size(22.dp)) {
                     val w = size.width; val h = size.height
                     val col = Color(0xFFB5A89B)

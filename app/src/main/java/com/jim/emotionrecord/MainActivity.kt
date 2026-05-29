@@ -28,6 +28,7 @@ import com.jim.emotionrecord.quest.ui.mission.MissionBreathScreen
 import com.jim.emotionrecord.quest.ui.mission.MissionGratitudeScreen
 import com.jim.emotionrecord.quest.ui.mission.MissionWarmScreen
 import com.jim.emotionrecord.quest.ui.record.QuestRecordScreen
+import com.jim.emotionrecord.quest.ui.graph.QuestGraphScreen
 import com.jim.emotionrecord.ui.graph.GraphScreen
 import com.jim.emotionrecord.ui.home.HomeScreen
 import com.jim.emotionrecord.ui.landing.LandingScreen
@@ -156,9 +157,10 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(route)
                                 },
                                 onClose = { navController.popBackStack() }
-                            )
-                        }
-                        // QuestMap: justStamped 쿼리 파라미터로 착지 애니메이션 제어
+                                )
+                                }
+
+                                // QuestMap: justStamped 쿼리 파라미터로 착지 애니메이션 제어
                         composable(
                             route = Screen.QuestMap.COMPOSABLE_ROUTE,
                             arguments = listOf(
@@ -171,6 +173,17 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToRecord = {
                                     // 지도→기록: fromMap=true → X 버튼 노출
                                     navController.navigate(Screen.QuestRecord.withFromMap(true))
+                                },
+                                onNavigateToGraph = {
+                                    navController.navigate(Screen.QuestGraph.route)
+                                }
+                            )
+                        }
+
+                        composable(Screen.QuestGraph.route) {
+                            QuestGraphScreen(
+                                onNavigateBack = {
+                                    navController.popBackStack()
                                 }
                             )
                         }
