@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "369965360466",
+    "project_id": "emotion-record-ce626",
+    "storage_bucket": "emotion-record-ce626.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:369965360466:android:fefbd747fd39d3f95b868b",
+        "android_client_info": {
+          "package_name": "com.jim.emotionrecord"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUrB_LfT5vTWZmSMj6IxExMPOr7lknWN4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

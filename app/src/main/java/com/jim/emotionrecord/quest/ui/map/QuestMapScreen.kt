@@ -2,6 +2,7 @@ package com.jim.emotionrecord.quest.ui.map
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -196,10 +197,14 @@ private fun MapTopBar(
             }
         },
         actions = {
-            IconButton(onClick = onSeedData) {
-                Canvas(modifier = Modifier.size(18.dp)) {
-                    drawCircle(QText3, style = Stroke(2.dp.toPx()))
-                }
+            Box(
+                modifier = Modifier
+                    .clickable { onSeedData.invoke() },
+                contentAlignment = Alignment.BottomCenter,
+            ) {
+                Text(
+                    text = "데모 데이터",
+                )
             }
             // 그래프 버튼
             IconButton(onClick = onGraphClick) {
