@@ -16,7 +16,11 @@ sealed class Screen(val route: String) {
         fun withFromMap(fromMap: Boolean) = if (fromMap) "$route?fromMap=true" else route
         const val COMPOSABLE_ROUTE = "quest_record?fromMap={fromMap}"
     }
-    data object QuestMap : Screen("quest_map")
+    data object QuestMap : Screen("quest_map") {
+        // 기록/미션 완료 직후 착지 애니메이션을 재생할 때 사용
+        fun withJustStamped() = "$route?justStamped=true"
+        const val COMPOSABLE_ROUTE = "quest_map?justStamped={justStamped}"
+    }
     data object QuestMissionBreath    : Screen("quest_mission_breath/{recordId}")
     data object QuestMissionGratitude : Screen("quest_mission_gratitude/{recordId}/{question}")
     data object QuestMissionWarm      : Screen("quest_mission_warm/{recordId}")

@@ -78,7 +78,7 @@ fun QuestMapScreen(
 ) {
     val state by viewModel.collectAsState()
 
-    // 화면 진입마다 새로 고침 (미션 완료 후 복귀 포함)
+    // 진입마다 새로 고침 (미션 완료 후 복귀 포함)
     LaunchedEffect(Unit) { viewModel.refresh() }
 
     viewModel.collectSideEffect { effect ->
@@ -88,7 +88,7 @@ fun QuestMapScreen(
     }
 
     Scaffold(
-        topBar = { MapTopBar(state.sectionData) },
+        topBar = { MapTopBar(state.sectionData, onSeedData = { viewModel.seedData() }) },
         containerColor = QBg,
     ) { padding ->
         Column(
@@ -106,10 +106,7 @@ fun QuestMapScreen(
             ) {
                 val section = state.sectionData
                 if (section != null) {
-                    MapContent(
-                        sectionData  = section,
-                        justStamped  = justStamped,
-                    )
+                    MapContent(sectionData = section, justStamped = justStamped)
                 }
             }
 
@@ -127,7 +124,7 @@ fun QuestMapScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MapTopBar(section: SectionData?) {
+private fun MapTopBar(section: SectionData?, onSeedData: () -> Unit) {
     TopAppBar(
         title = {
             if (section != null) {
@@ -149,12 +146,21 @@ private fun MapTopBar(section: SectionData?) {
             }
         },
         actions = {
-            // 그래프 버튼 (TIER 2 — 현재는 placeholder)
+            // DEBUG: 시드 데이터 버튼
+            androidx.compose.material3.TextButton(onClick = onSeedData) {
+                Text(
+                    text      = "SEED",
+                    fontSize  = 11.sp,
+                    fontWeight = FontWeight(700),
+                    color     = QText3,
+                    letterSpacing = 0.8.sp,
+                )
+            }
+            // 그래프 버튼 (TIER 2 — placeholder)
             IconButton(onClick = {}, enabled = false) {
                 Canvas(modifier = Modifier.size(22.dp)) {
                     val w = size.width; val h = size.height
                     val col = Color(0xFFB5A89B)
-                    // 막대 3개 (bar chart icon)
                     drawRect(col, Offset(0f, h * 0.54f), androidx.compose.ui.geometry.Size(w * 0.3f, h * 0.46f))
                     drawRect(col, Offset(w * 0.35f, h * 0.21f), androidx.compose.ui.geometry.Size(w * 0.3f, h * 0.79f))
                     drawRect(col, Offset(w * 0.70f, h * 0.38f), androidx.compose.ui.geometry.Size(w * 0.3f, h * 0.62f))
@@ -243,35 +249,31 @@ private fun MapContent(sectionData: SectionData, justStamped: Boolean) {
         )
 
         // 스탬프 + 요일 레이블
+        // 화면 너비 - 좌우 패딩 32dp(MapContent 부모의 horizontal 16dp*2)로 맵 너비 근사
+        val approxMapW = (configuration.screenWidthDp - 32).dp
+        val colGapDp   = approxMapW / 6
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(totalH),
         ) {
-            val density2 = LocalDensity.current
             stamps.forEachIndexed { i, stamp ->
-                val mapWDp: Dp // BoxWithConstraints 없이 fillMaxWidth 사용하므로 후계산
-                // fillMaxWidth → 실제 너비를 런타임에서만 알 수 있음.
-                // 대신 화면 너비 - 32dp(좌우 패딩 16*2) - 보정으로 근사
-                val approxMapW = (LocalConfiguration.current.screenWidthDp - 32).dp
-                val colGapDp   = approxMapW / 6
-                val xCenter    = colGapDp * COL_PATTERN[stamp.dayIndex % 7].toFloat()
-                val yCenter    = totalH - PAD_BOT - CELL_H * i.toFloat()
-                val tilt       = when (i % 3) { 0 -> -2.5f; 1 -> 1.5f; else -> -1f }
+                val xCenter = colGapDp * COL_PATTERN[stamp.dayIndex % 7].toFloat()
+                val yCenter = totalH - PAD_BOT - CELL_H * i.toFloat()
+                val tilt    = when (i % 3) { 0 -> -2.5f; 1 -> 1.5f; else -> -1f }
 
-                // 스탬프
                 EmotionStamp(
-                    stamp         = stamp,
-                    size          = STAMP_SIZE,
-                    tiltDegrees   = tilt,
+                    stamp          = stamp,
+                    size           = STAMP_SIZE,
+                    tiltDegrees    = tilt,
                     animateLanding = justStamped && stamp.isToday,
-                    modifier = Modifier.offset(
+                    modifier       = Modifier.offset(
                         x = xCenter - STAMP_SIZE / 2,
                         y = yCenter - STAMP_SIZE / 2,
                     ),
                 )
 
-                // 요일 레이블
                 Text(
                     text       = stamp.label,
                     fontSize   = 11.sp,

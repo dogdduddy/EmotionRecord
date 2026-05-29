@@ -137,7 +137,8 @@ class MainActivity : ComponentActivity() {
                             QuestRecordScreen(
                                 fromMap = fromMap,
                                 onNavigateToMap = {
-                                    navController.navigate(Screen.QuestMap.route) {
+                                    // 기록 완료("다음에 하기") → 착지 애니메이션 재생
+                                    navController.navigate(Screen.QuestMap.withJustStamped()) {
                                         popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },
@@ -157,8 +158,16 @@ class MainActivity : ComponentActivity() {
                                 onClose = { navController.popBackStack() }
                             )
                         }
-                        composable(Screen.QuestMap.route) {
+                        // QuestMap: justStamped 쿼리 파라미터로 착지 애니메이션 제어
+                        composable(
+                            route = Screen.QuestMap.COMPOSABLE_ROUTE,
+                            arguments = listOf(
+                                navArgument("justStamped") { type = NavType.BoolType; defaultValue = false }
+                            )
+                        ) { backStackEntry ->
+                            val justStamped = backStackEntry.arguments?.getBoolean("justStamped") ?: false
                             QuestMapScreen(
+                                justStamped = justStamped,
                                 onNavigateToRecord = {
                                     // 지도→기록: fromMap=true → X 버튼 노출
                                     navController.navigate(Screen.QuestRecord.withFromMap(true))
@@ -175,7 +184,8 @@ class MainActivity : ComponentActivity() {
                             MissionBreathScreen(
                                 recordId = recordId,
                                 onNavigateToMap = {
-                                    navController.navigate(Screen.QuestMap.route) {
+                                    // 미션 완료 → 착지 애니메이션 재생
+                                    navController.navigate(Screen.QuestMap.withJustStamped()) {
                                         popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },
@@ -195,7 +205,7 @@ class MainActivity : ComponentActivity() {
                                 recordId = recordId,
                                 question = question,
                                 onNavigateToMap = {
-                                    navController.navigate(Screen.QuestMap.route) {
+                                    navController.navigate(Screen.QuestMap.withJustStamped()) {
                                         popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },
@@ -210,7 +220,7 @@ class MainActivity : ComponentActivity() {
                             MissionWarmScreen(
                                 recordId = recordId,
                                 onNavigateToMap = {
-                                    navController.navigate(Screen.QuestMap.route) {
+                                    navController.navigate(Screen.QuestMap.withJustStamped()) {
                                         popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },

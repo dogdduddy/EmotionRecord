@@ -1,10 +1,14 @@
 package com.jim.emotionrecord.quest.ui.map
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -14,11 +18,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -49,7 +57,9 @@ import kotlin.math.sin
 
 /**
  * 스탬프 4상태: COMPLETE / MISSION / SKIPPED / TODAY
- * [animateLanding] STEP 7 복귀 애니메이션 — 현재는 no-op 플래그
+ *
+ * [animateLanding] true이면 미션/기록 완료 후 복귀 착지 애니메이션 1회 재생.
+ * keyframe: scale 2.2→spring bounce→1.0 / alpha 0→1 (ref: stampLand 480ms)
  */
 @Composable
 fun EmotionStamp(
@@ -59,11 +69,43 @@ fun EmotionStamp(
     animateLanding: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    val scaleAnim = remember { Animatable(1f) }
+    val alphaAnim = remember { Animatable(1f) }
+    val played    = remember { mutableStateOf(false) }
+
+    LaunchedEffect(animateLanding) {
+        if (animateLanding && !played.value) {
+            played.value = true
+            scaleAnim.snapTo(2.2f)
+            alphaAnim.snapTo(0f)
+            // 스케일: 2.2 → spring bounce → 1.0 (overshoot ~0.92)
+            launch {
+                scaleAnim.animateTo(
+                    targetValue   = 1f,
+                    animationSpec = spring(
+                        dampingRatio = 0.42f,
+                        stiffness    = Spring.StiffnessMediumLow,
+                    )
+                )
+            }
+            // 알파: 0 → 1 (빠르게)
+            alphaAnim.animateTo(
+                targetValue   = 1f,
+                animationSpec = tween(durationMillis = 260, easing = FastOutLinearInEasing),
+            )
+        }
+    }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(size)
-            .rotate(tiltDegrees),
+            .graphicsLayer {
+                rotationZ = tiltDegrees
+                scaleX    = scaleAnim.value
+                scaleY    = scaleAnim.value
+                alpha     = alphaAnim.value
+            },
     ) {
         when (stamp.state) {
             StampState.COMPLETE -> CompleteStamp(stamp.emotion, size)
