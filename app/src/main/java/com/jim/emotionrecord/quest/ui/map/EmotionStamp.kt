@@ -1,0 +1,278 @@
+package com.jim.emotionrecord.quest.ui.map
+
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.jim.emotionrecord.quest.domain.model.DayStamp
+import com.jim.emotionrecord.quest.domain.model.Emotion
+import com.jim.emotionrecord.quest.domain.model.StampState
+import com.jim.emotionrecord.quest.ui.common.EmotionFace
+import com.jim.emotionrecord.ui.theme.QPrimary
+import com.jim.emotionrecord.ui.theme.QPrimaryDeep
+import com.jim.emotionrecord.ui.theme.QuestTheme
+import com.jim.emotionrecord.ui.theme.qEmoColor
+import com.jim.emotionrecord.ui.theme.qEmoInk
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
+
+/**
+ * 스탬프 4상태: COMPLETE / MISSION / SKIPPED / TODAY
+ * [animateLanding] STEP 7 복귀 애니메이션 — 현재는 no-op 플래그
+ */
+@Composable
+fun EmotionStamp(
+    stamp: DayStamp,
+    size: Dp = 72.dp,
+    tiltDegrees: Float = 0f,
+    animateLanding: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(size)
+            .rotate(tiltDegrees),
+    ) {
+        when (stamp.state) {
+            StampState.COMPLETE -> CompleteStamp(stamp.emotion, size)
+            StampState.MISSION  -> MissionStamp(stamp.emotion, size)
+            StampState.SKIPPED  -> SkippedMark(size)
+            StampState.TODAY    -> TodayMark(size)
+            StampState.LOCKED   -> Unit
+        }
+    }
+}
+
+// ── COMPLETE ────────────────────────────────────────────────────────────────
+
+@Composable
+private fun CompleteStamp(emotion: Emotion?, size: Dp) {
+    val level = emotion?.level ?: 3
+    val discSize = size * 0.78f
+    val emoColor = qEmoColor(level)
+    val inkColor = qEmoInk(level)
+
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(discSize)) {
+        Canvas(modifier = Modifier.size(discSize)) {
+            val r = this.size.width / 2f
+            val c = Offset(r, r)
+            // 감정색 원판
+            drawCircle(emoColor, r, c)
+            // 잉크 내측 보더 (도장 느낌)
+            drawCircle(inkColor, r - 1.7.dp.toPx(), c, style = Stroke(width = 3.4.dp.toPx()))
+            // 흰 내측 하이라이트
+            drawCircle(Color.White.copy(alpha = 0.50f), r - 1.1.dp.toPx(), c, style = Stroke(width = 2.2.dp.toPx()))
+        }
+        EmotionFace(level = level, size = discSize * 0.74f, flat = true)
+    }
+}
+
+// ── MISSION ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun MissionStamp(emotion: Emotion?, size: Dp) {
+    val level = emotion?.level ?: 3
+    val emoColor = qEmoColor(level)
+    val inkColor = qEmoInk(level)
+    val discSize = size * 0.78f
+
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.size(size)) {
+        // 페탈 링 + 글로우 (Canvas)
+        Canvas(modifier = Modifier.size(size)) {
+            val cx = this.size.width / 2f
+            val cy = this.size.height / 2f
+            val discR = discSize.toPx() / 2f
+            val ringR = discR + 5.dp.toPx()
+            val petalCount = 10
+
+            // soft glow halo
+            drawCircle(emoColor.copy(alpha = 0.18f), ringR + 4.dp.toPx(), Offset(cx, cy))
+
+            // radiating petals
+            repeat(petalCount) { i ->
+                val angle = (i.toFloat() / petalCount) * 2 * PI.toFloat() - (PI / 2).toFloat()
+                val px = cx + cos(angle) * (ringR + 2.dp.toPx())
+                val py = cy + sin(angle) * (ringR + 2.dp.toPx())
+                val rotateDeg = angle * 180f / PI.toFloat() + 90f
+                withTransform({ rotate(rotateDeg, Offset(px, py)) }) {
+                    val pw = 4.4.dp.toPx()
+                    val ph = 8.8.dp.toPx()
+                    drawOval(
+                        color = emoColor.copy(alpha = 0.82f),
+                        topLeft = Offset(px - pw / 2f, py - ph / 2f),
+                        size = Size(pw, ph),
+                    )
+                }
+            }
+
+            // 2 tiny sparkles
+            sparkle(cx * 0.42f, cy * 0.50f, 4.dp.toPx(), emoColor)
+            sparkle(cx * 1.58f, cy * 1.54f, 3.dp.toPx(), inkColor)
+        }
+
+        // Disc (reuse complete stamp drawing)
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(discSize)) {
+            Canvas(modifier = Modifier.size(discSize)) {
+                val r = this.size.width / 2f
+                val c = Offset(r, r)
+                drawCircle(emoColor, r, c)
+                drawCircle(inkColor, r - 1.7.dp.toPx(), c, style = Stroke(width = 3.4.dp.toPx()))
+                drawCircle(Color.White.copy(0.50f), r - 1.1.dp.toPx(), c, style = Stroke(width = 2.2.dp.toPx()))
+            }
+            EmotionFace(level = level, size = discSize * 0.74f, flat = true)
+        }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.sparkle(
+    x: Float, y: Float, r: Float, color: Color
+) {
+    val path = androidx.compose.ui.graphics.Path().apply {
+        moveTo(x, y - r)
+        lineTo(x + r * 0.3f, y - r * 0.3f)
+        lineTo(x + r, y)
+        lineTo(x + r * 0.3f, y + r * 0.3f)
+        lineTo(x, y + r)
+        lineTo(x - r * 0.3f, y + r * 0.3f)
+        lineTo(x - r, y)
+        lineTo(x - r * 0.3f, y - r * 0.3f)
+        close()
+    }
+    drawPath(path, color)
+}
+
+// ── SKIPPED ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun SkippedMark(size: Dp) {
+    Canvas(modifier = Modifier.size(size * 0.5f)) {
+        val w = this.size.width
+        val h = this.size.height
+        val stroke = Stroke(width = 2.4.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        val color = Color(0xFFB5A89B).copy(alpha = 0.55f)
+        // two faded dashes — "—"
+        drawLine(color, Offset(w * 0.15f, h / 2f), Offset(w * 0.42f, h / 2f), strokeWidth = stroke.width)
+        drawLine(color, Offset(w * 0.58f, h / 2f), Offset(w * 0.85f, h / 2f), strokeWidth = stroke.width)
+    }
+}
+
+// ── TODAY ───────────────────────────────────────────────────────────────────
+
+@Composable
+fun TodayMark(size: Dp) {
+    val discSize = size * 0.78f
+    val textMeasurer = rememberTextMeasurer()
+
+    val infiniteTransition = rememberInfiniteTransition(label = "todayPulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue  = 1.12f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(900, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulseScale",
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.size(size),
+    ) {
+        // 펄스 글로우 halo
+        Canvas(modifier = Modifier.size(size).scale(pulseScale)) {
+            val haloR = discSize.toPx() / 2f + 7.dp.toPx()
+            drawCircle(
+                color = Color(0x2BD85A30),
+                radius = haloR,
+                center = Offset(this.size.width / 2f, this.size.height / 2f),
+            )
+        }
+
+        // 점선 원 + "?"
+        Canvas(modifier = Modifier.size(discSize)) {
+            val r = this.size.width / 2f
+            val c = Offset(r, r)
+            // 반투명 흰 배경
+            drawCircle(Color.White.copy(alpha = 0.70f), r, c)
+            // 점선 테두리
+            drawCircle(
+                color = QPrimary,
+                radius = r - 1.dp.toPx(),
+                center = c,
+                style = Stroke(
+                    width = 2.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(
+                        floatArrayOf(4.dp.toPx(), 5.dp.toPx()), 0f
+                    )
+                ),
+            )
+            // "?" 텍스트
+            val layout = textMeasurer.measure(
+                text  = "?",
+                style = TextStyle(
+                    fontSize   = (discSize.toPx() * 0.44f / density).sp,
+                    fontWeight = FontWeight(800),
+                    color      = QPrimaryDeep,
+                )
+            )
+            drawText(
+                textLayoutResult = layout,
+                topLeft = Offset(
+                    c.x - layout.size.width / 2f,
+                    c.y - layout.size.height / 2f,
+                ),
+            )
+        }
+    }
+}
+
+// ── Preview ─────────────────────────────────────────────────────────────────
+
+@Preview(showBackground = true, backgroundColor = 0xFFF7F1E6)
+@Composable
+private fun StampPreview() {
+    QuestTheme {
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+        ) {
+            EmotionStamp(DayStamp(0, "월", StampState.COMPLETE, Emotion.GOOD))
+            EmotionStamp(DayStamp(1, "화", StampState.MISSION, Emotion.VERY_GOOD))
+            EmotionStamp(DayStamp(2, "수", StampState.SKIPPED))
+            EmotionStamp(DayStamp(3, "목", StampState.TODAY, isToday = true))
+        }
+    }
+}

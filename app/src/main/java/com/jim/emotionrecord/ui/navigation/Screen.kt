@@ -10,9 +10,13 @@ sealed class Screen(val route: String) {
     data object Graph  : Screen("graph")
 
     // 퀘스트 감정 기록 (quest prototype)
-    data object QuestRouter           : Screen("quest_router")
-    data object QuestRecord           : Screen("quest_record")
-    data object QuestMap              : Screen("quest_map")
+    data object QuestRouter : Screen("quest_router")
+    data object QuestRecord : Screen("quest_record") {
+        // fromMap=true 일 때 X 버튼 표시 (지도에서 진입)
+        fun withFromMap(fromMap: Boolean) = if (fromMap) "$route?fromMap=true" else route
+        const val COMPOSABLE_ROUTE = "quest_record?fromMap={fromMap}"
+    }
+    data object QuestMap : Screen("quest_map")
     data object QuestMissionBreath    : Screen("quest_mission_breath/{recordId}")
     data object QuestMissionGratitude : Screen("quest_mission_gratitude/{recordId}/{question}")
     data object QuestMissionWarm      : Screen("quest_mission_warm/{recordId}")

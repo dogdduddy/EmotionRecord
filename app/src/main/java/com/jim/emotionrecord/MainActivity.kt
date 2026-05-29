@@ -126,23 +126,30 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                        composable(Screen.QuestRecord.route) {
+                        // QuestRecord: fromMap 쿼리 파라미터로 X 버튼 제어
+                        composable(
+                            route = Screen.QuestRecord.COMPOSABLE_ROUTE,
+                            arguments = listOf(
+                                navArgument("fromMap") { type = NavType.BoolType; defaultValue = false }
+                            )
+                        ) { backStackEntry ->
+                            val fromMap = backStackEntry.arguments?.getBoolean("fromMap") ?: false
                             QuestRecordScreen(
-                                fromMap = false,
+                                fromMap = fromMap,
                                 onNavigateToMap = {
                                     navController.navigate(Screen.QuestMap.route) {
-                                        popUpTo(Screen.QuestRecord.route) { inclusive = true }
+                                        popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },
                                 onNavigateToMission = { level, recordId ->
                                     val route = when (level) {
                                         1, 2 -> Screen.QuestMissionBreath.route.replace("{recordId}", recordId.toString())
-                                        3 -> Screen.QuestMissionGratitude.route
-                                            .replace("{recordId}", recordId.toString())
-                                            .replace("{question}", "작은 성취")
+                                        3    -> Screen.QuestMissionGratitude.route
+                                                    .replace("{recordId}", recordId.toString())
+                                                    .replace("{question}", "작은 성취")
                                         4, 5 -> Screen.QuestMissionGratitude.route
-                                            .replace("{recordId}", recordId.toString())
-                                            .replace("{question}", "감사한 것")
+                                                    .replace("{recordId}", recordId.toString())
+                                                    .replace("{question}", "감사한 것")
                                         else -> Screen.QuestMissionWarm.route.replace("{recordId}", recordId.toString())
                                     }
                                     navController.navigate(route)
@@ -153,7 +160,8 @@ class MainActivity : ComponentActivity() {
                         composable(Screen.QuestMap.route) {
                             QuestMapScreen(
                                 onNavigateToRecord = {
-                                    navController.navigate(Screen.QuestRecord.route)
+                                    // 지도→기록: fromMap=true → X 버튼 노출
+                                    navController.navigate(Screen.QuestRecord.withFromMap(true))
                                 }
                             )
                         }
@@ -168,7 +176,7 @@ class MainActivity : ComponentActivity() {
                                 recordId = recordId,
                                 onNavigateToMap = {
                                     navController.navigate(Screen.QuestMap.route) {
-                                        popUpTo(Screen.QuestMap.route) { inclusive = true }
+                                        popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },
                                 onNavigateBack = { navController.popBackStack() }
@@ -188,7 +196,7 @@ class MainActivity : ComponentActivity() {
                                 question = question,
                                 onNavigateToMap = {
                                     navController.navigate(Screen.QuestMap.route) {
-                                        popUpTo(Screen.QuestMap.route) { inclusive = true }
+                                        popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },
                                 onNavigateBack = { navController.popBackStack() }
@@ -203,7 +211,7 @@ class MainActivity : ComponentActivity() {
                                 recordId = recordId,
                                 onNavigateToMap = {
                                     navController.navigate(Screen.QuestMap.route) {
-                                        popUpTo(Screen.QuestMap.route) { inclusive = true }
+                                        popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },
                                 onNavigateBack = { navController.popBackStack() }
