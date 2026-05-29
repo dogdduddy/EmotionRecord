@@ -43,10 +43,14 @@ fun MissionBreathScreen(
     }
 
     var isInhale by remember { mutableStateOf(false) }
+    var iterationCount by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
         isInhale = true
         while (true) {
             kotlinx.coroutines.delay(4000)
+            if (!isInhale) {
+                iterationCount = (iterationCount % 4) + 1
+            }
             isInhale = !isInhale
         }
     }
@@ -134,6 +138,23 @@ fun MissionBreathScreen(
                             color = QText1
                         )
                     }
+                }
+            }
+
+            Spacer(Modifier.height(32.dp))
+
+            // Iteration indicators
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(4) { index ->
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(if (index < iterationCount) QPrimary else QLineStrong)
+                    )
                 }
             }
 
