@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.jim.emotionrecord.quest.domain.model.SectionData
 import com.jim.emotionrecord.quest.domain.usecase.GetQuestMapSectionsUseCase
 import com.jim.emotionrecord.quest.domain.usecase.SeedQuestDataUseCase
+import com.jim.emotionrecord.quest.domain.usecase.SeedScenario
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.viewmodel.container
@@ -36,9 +37,11 @@ class QuestMapViewModel @Inject constructor(
         reduce { state.copy(isLoading = false, sections = sections) }
     }
 
-    fun seedData() = intent {
-        seedQuestDataUseCase()
-        refresh()
+    fun seedData(scenario: SeedScenario) = intent {
+        reduce { state.copy(isLoading = true) }
+        seedQuestDataUseCase(scenario)
+        val sections = getQuestMapSectionsUseCase()
+        reduce { state.copy(isLoading = false, sections = sections) }
     }
 
     fun onGoToRecord() = intent {

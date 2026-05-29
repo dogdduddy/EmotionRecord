@@ -57,6 +57,13 @@ import com.jim.emotionrecord.ui.theme.QText3
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.jim.emotionrecord.quest.domain.usecase.SeedScenario
+
 // 지그재그 컬럼 패턴 (5컬럼 기준, 인덱스 0~6: 월~일)
 private val COL_PATTERN = intArrayOf(2, 3, 4, 3, 2, 1, 2)
 private val STAMP_SIZE  = 72.dp
@@ -71,6 +78,7 @@ fun QuestMapScreen(
     viewModel: QuestMapViewModel = hiltViewModel(),
 ) {
     val state by viewModel.collectAsState()
+    var showSeedDialog by remember { mutableStateOf(false) }
 
     // 진입마다 새로 고침
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -84,7 +92,10 @@ fun QuestMapScreen(
     Scaffold(
         topBar = {
             val currentSection = state.sections.lastOrNull()
-            MapTopBar(currentSection, onSeedData = { viewModel.seedData() })
+            MapTopBar(
+                section    = currentSection,
+                onSeedData = { showSeedDialog = true }
+            )
         },
         containerColor = QBg,
     ) { padding ->
@@ -114,6 +125,42 @@ fun QuestMapScreen(
             )
         }
     }
+
+    if (showSeedDialog) {
+        SeedSelectionDialog(
+            onDismiss  = { showSeedDialog = false },
+            onSelected = { scenario ->
+                showSeedDialog = false
+                viewModel.seedData(scenario)
+            }
+        )
+    }
+}
+
+@Composable
+private fun SeedSelectionDialog(
+    onDismiss: () -> Unit,
+    onSelected: (SeedScenario) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title   = { Text("테스트용 시드 데이터 선택", fontWeight = FontWeight.Bold) },
+        text    = {
+            Column {
+                SeedScenario.values().forEach { scenario ->
+                    TextButton(
+                        onClick = { onSelected(scenario) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(scenario.label, color = QText1)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("취소") }
+        }
+    )
 }
 
 // ── TopBar ───────────────────────────────────────────────────────────────────

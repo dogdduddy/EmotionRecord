@@ -9,57 +9,78 @@ import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.random.Random
 
-/**
- * 디버그용 시드 데이터.
- * 이번 주 월요일을 기준으로 4상태가 모두 보이도록 구성:
- *   월=COMPLETE(보통), 화=MISSION(좋음), 수=SKIPPED, 오늘=TODAY, 미래=미표시
- *
- * 목요일 이후에 실행해야 4상태가 완전히 보임.
- */
+enum class SeedScenario(val label: String, val totalWeeks: Int) {
+    WEEK_1("1주차 진행 중", 1),
+    WEEK_2("2주차 진행 중", 2),
+    WEEK_5("5주차 진행 중", 5),
+    WEEK_9("9주차 진행 중", 9)
+}
+
 @Singleton
 class SeedQuestDataUseCase @Inject constructor(
     private val emotionRecordRepository: EmotionRecordRepository,
     private val questUserMetaRepository: QuestUserMetaRepository,
 ) {
-    suspend operator fun invoke() {
+    suspend operator fun invoke(scenario: SeedScenario = SeedScenario.WEEK_1) {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now()
-
-        // 이번 주 월요일 (ISO: 월=1)
-        val monday = today.with(DayOfWeek.MONDAY)
-        val mondayMs = monday.atStartOfDay(zone).toInstant().toEpochMilli()
+        val thisMonday = today.with(DayOfWeek.MONDAY)
 
         // 기존 데이터 삭제
         emotionRecordRepository.deleteAll()
-        questUserMetaRepository.upsert(QuestUserMetaEntity(firstRecordedAt = null, onboardingSeen = false))
+        
+        // 시작일 계산 (N주차 진행 중이면 (N-1)주 전 월요일이 시작일)
+        val firstMonday = thisMonday.minusWeeks((scenario.totalWeeks - 1).toLong())
+        val firstMondayMs = firstMonday.atStartOfDay(zone).toInstant().toEpochMilli()
 
-        // firstRecordedAt = 이번 주 월요일
-        questUserMetaRepository.upsert(QuestUserMetaEntity(firstRecordedAt = mondayMs, onboardingSeen = false))
+        questUserMetaRepository.upsert(QuestUserMetaEntity(firstRecordedAt = firstMondayMs, onboardingSeen = true))
 
-        // 월요일: level3(보통) → COMPLETE  [우상향 시작]
-        emotionRecordRepository.insert(
-            EmotionRecordEntity(
-                emotionLevel     = 3,
-                memo             = "오늘 하루 무난하게 지나갔다.",
-                missionCompleted = false,
-                recordedAt       = monday.atTime(9, 0).atZone(zone).toInstant().toEpochMilli(),
-            )
-        )
+        val random = Random(42) // 고정 시드
 
-        // 화요일: level4(좋음) + missionCompleted → MISSION  [우상향]
-        val tuesday = monday.plusDays(1)
-        emotionRecordRepository.insert(
-            EmotionRecordEntity(
-                emotionLevel     = 4,
-                memo             = "산책 다녀왔더니 기분이 좋아졌다.",
-                missionCompleted = true,
-                recordedAt       = tuesday.atTime(10, 30).atZone(zone).toInstant().toEpochMilli(),
-            )
-        )
+        // 과거 주차들 (0 ~ totalWeeks-2) 채우기
+        for (w in 0 until (scenario.totalWeeks - 1)) {
+            val weekStart = firstMonday.plusWeeks(w.toLong())
+            for (d in 0..6) {
+                val date = weekStart.plusDays(d.toLong())
+                
+                // 80% 확률로 기록 (가끔 빠진 날 생성)
+                if (random.nextFloat() < 0.85f) {
+                    val level = random.nextInt(1, 6)
+                    val mission = random.nextFloat() < 0.4f // 40% 확률로 미션 완료
+                    
+                    emotionRecordRepository.insert(
+                        EmotionRecordEntity(
+                            emotionLevel     = level,
+                            memo             = "과거 기록 - ${w + 1}주차 ${d + 1}일째",
+                            missionCompleted = mission,
+                            recordedAt       = date.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
+                        )
+                    )
+                }
+            }
+        }
 
-        // 수요일: 기록 없음 → SKIPPED
-        // 오늘(목요일 이후): 기록 없음 → TODAY
-        // 미래: 자동으로 미표시
+        // 현재 주차 (이번 주) 월요일부터 어제까지 채우기
+        for (d in 0..6) {
+            val date = thisMonday.plusDays(d.toLong())
+            if (date.isAfter(today.minusDays(1))) break
+            
+            if (random.nextFloat() < 0.9f) {
+                val level = random.nextInt(2, 6)
+                val mission = random.nextFloat() < 0.5f
+                emotionRecordRepository.insert(
+                    EmotionRecordEntity(
+                        emotionLevel     = level,
+                        memo             = "이번 주 기록 - $date",
+                        missionCompleted = mission,
+                        recordedAt       = date.atTime(15, 0).atZone(zone).toInstant().toEpochMilli()
+                    )
+                )
+            }
+        }
+        
+        // 오늘은 기록 안 함 (QuestMapScreen에서 TODAY/미완료 상태를 확인하기 위함)
     }
 }
