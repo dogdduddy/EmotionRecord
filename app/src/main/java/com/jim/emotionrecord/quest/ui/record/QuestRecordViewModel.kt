@@ -6,6 +6,9 @@ import com.jim.emotionrecord.quest.data.local.entity.QuestUserMetaEntity
 import com.jim.emotionrecord.quest.data.repository.EmotionRecordRepository
 import com.jim.emotionrecord.quest.data.repository.QuestUserMetaRepository
 import com.jim.emotionrecord.quest.domain.model.Emotion
+import com.jim.emotionrecord.quest.domain.model.Mission
+import com.jim.emotionrecord.quest.domain.model.MissionProvider
+import com.jim.emotionrecord.quest.domain.model.MissionType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -16,13 +19,18 @@ data class QuestRecordState(
     val selectedEmotion: Emotion? = null,
     val memo: String = "",
     val showMissionSheet: Boolean = false,
+    val assignedMission: Mission? = null,
     val recordedId: Long? = null,
     val isSaving: Boolean = false
 )
 
 sealed class QuestRecordSideEffect {
     data object NavigateToMap : QuestRecordSideEffect()
-    data class NavigateToMission(val level: Int, val recordId: Long) : QuestRecordSideEffect()
+    data class NavigateToMission(
+        val type: MissionType,
+        val missionId: String,
+        val recordId: Long
+    ) : QuestRecordSideEffect()
 }
 
 @HiltViewModel
@@ -61,9 +69,12 @@ class QuestRecordViewModel @Inject constructor(
             userMetaRepository.upsert(meta.copy(firstRecordedAt = now))
         }
 
+        val mission = MissionProvider.getMissionForEmotion(emotion.level)
+
         reduce {
             state.copy(
                 recordedId = id,
+                assignedMission = mission,
                 showMissionSheet = true,
                 isSaving = false
             )
@@ -76,9 +87,15 @@ class QuestRecordViewModel @Inject constructor(
     }
 
     fun onGoToMission() = intent {
-        val emotion = state.selectedEmotion ?: return@intent
+        val mission = state.assignedMission ?: return@intent
         val recordId = state.recordedId ?: return@intent
         reduce { state.copy(showMissionSheet = false) }
-        postSideEffect(QuestRecordSideEffect.NavigateToMission(emotion.level, recordId))
+        postSideEffect(
+            QuestRecordSideEffect.NavigateToMission(
+                type = mission.type,
+                missionId = mission.id,
+                recordId = recordId
+            )
+        )
     }
 }

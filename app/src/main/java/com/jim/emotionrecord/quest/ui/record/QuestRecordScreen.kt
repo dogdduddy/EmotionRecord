@@ -35,6 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.jim.emotionrecord.quest.domain.model.Emotion
 import com.jim.emotionrecord.quest.domain.model.Mission
 import com.jim.emotionrecord.quest.domain.model.MissionProvider
+import com.jim.emotionrecord.quest.domain.model.MissionType
 import com.jim.emotionrecord.quest.ui.common.EmotionFace
 import com.jim.emotionrecord.quest.ui.common.QuestPrimaryButton
 import com.jim.emotionrecord.quest.ui.common.QuestSecondaryButton
@@ -47,22 +48,25 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 fun QuestRecordScreen(
     fromMap: Boolean = false,
     onNavigateToMap: () -> Unit = {},
-    onNavigateToMission: (Int, Long) -> Unit = { _, _ -> },
+    onNavigateToMission: (MissionType, String, Long) -> Unit = { _, _, _ -> },
     onClose: () -> Unit = {},
-    viewModel: QuestRecordViewModel = hiltViewModel(),
+    viewModel: QuestRecordViewModel = hiltViewModel()
 ) {
     val state by viewModel.collectAsState()
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
 
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is QuestRecordSideEffect.NavigateToMap -> onNavigateToMap()
-            is QuestRecordSideEffect.NavigateToMission -> onNavigateToMission(sideEffect.level, sideEffect.recordId)
+            is QuestRecordSideEffect.NavigateToMission -> onNavigateToMission(
+                sideEffect.type,
+                sideEffect.missionId,
+                sideEffect.recordId
+            )
         }
     }
-
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
 
     Scaffold(
         topBar = {
@@ -145,8 +149,11 @@ fun QuestRecordScreen(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             contentWindowInsets = { WindowInsets(0) }
         ) {
-            state.selectedEmotion?.let { emotion ->
+            val mission = state.assignedMission
+            val emotion = state.selectedEmotion
+            if (mission != null && emotion != null) {
                 MissionProposalContent(
+                    mission = mission,
                     level = emotion.level,
                     onDoLater = { viewModel.onDoMissionLater() },
                     onGoToMission = { viewModel.onGoToMission() }
@@ -280,12 +287,11 @@ fun MemoInputBox(
 
 @Composable
 fun MissionProposalContent(
+    mission: Mission,
     level: Int,
     onDoLater: () -> Unit,
     onGoToMission: () -> Unit
 ) {
-    val mission = MissionProvider.getMissionForEmotion(level)
-
     Column(
         modifier = Modifier
             .fillMaxWidth()

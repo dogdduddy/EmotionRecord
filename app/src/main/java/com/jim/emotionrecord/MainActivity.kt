@@ -28,6 +28,7 @@ import com.jim.emotionrecord.quest.ui.mission.MissionBreathScreen
 import com.jim.emotionrecord.quest.ui.mission.MissionGratitudeScreen
 import com.jim.emotionrecord.quest.ui.mission.MissionWarmScreen
 import com.jim.emotionrecord.quest.ui.record.QuestRecordScreen
+import com.jim.emotionrecord.quest.domain.model.MissionType
 import com.jim.emotionrecord.quest.ui.graph.QuestGraphScreen
 import com.jim.emotionrecord.ui.graph.GraphScreen
 import com.jim.emotionrecord.ui.home.HomeScreen
@@ -143,24 +144,25 @@ class MainActivity : ComponentActivity() {
                                         popUpTo(Screen.Landing.route) { inclusive = false }
                                     }
                                 },
-                                onNavigateToMission = { level, recordId ->
-                                    val route = when (level) {
-                                        1, 2 -> Screen.QuestMissionBreath.route.replace("{recordId}", recordId.toString())
-                                        3    -> Screen.QuestMissionGratitude.route
-                                                    .replace("{recordId}", recordId.toString())
-                                                    .replace("{question}", "작은 성취")
-                                        4, 5 -> Screen.QuestMissionGratitude.route
-                                                    .replace("{recordId}", recordId.toString())
-                                                    .replace("{question}", "감사한 것")
+                                onNavigateToMission = { type, missionId, recordId ->
+                                    val route = when (type) {
+                                        MissionType.BREATH -> Screen.QuestMissionBreath.route.replace("{recordId}", recordId.toString())
+                                        MissionType.GRATITUDE -> {
+                                            val question = if (missionId == "achievement_1") "작은 성취" else "감사한 것"
+                                            Screen.QuestMissionGratitude.route
+                                                .replace("{recordId}", recordId.toString())
+                                                .replace("{question}", question)
+                                        }
+                                        MissionType.WARM -> Screen.QuestMissionWarm.route.replace("{recordId}", recordId.toString())
                                         else -> Screen.QuestMissionWarm.route.replace("{recordId}", recordId.toString())
                                     }
                                     navController.navigate(route)
                                 },
                                 onClose = { navController.popBackStack() }
-                                )
-                                }
+                            )
+                        }
 
-                                // QuestMap: justStamped 쿼리 파라미터로 착지 애니메이션 제어
+                        // QuestMap: justStamped 쿼리 파라미터로 착지 애니메이션 제어
                         composable(
                             route = Screen.QuestMap.COMPOSABLE_ROUTE,
                             arguments = listOf(
