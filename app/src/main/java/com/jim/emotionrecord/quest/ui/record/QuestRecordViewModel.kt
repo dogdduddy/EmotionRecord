@@ -22,7 +22,7 @@ data class QuestRecordState(
 
 sealed class QuestRecordSideEffect {
     data object NavigateToMap : QuestRecordSideEffect()
-    data class NavigateToMission(val missionId: String) : QuestRecordSideEffect()
+    data class NavigateToMission(val level: Int, val recordId: Long) : QuestRecordSideEffect()
 }
 
 @HiltViewModel
@@ -77,8 +77,8 @@ class QuestRecordViewModel @Inject constructor(
 
     fun onGoToMission() = intent {
         val emotion = state.selectedEmotion ?: return@intent
+        val recordId = state.recordedId ?: return@intent
         reduce { state.copy(showMissionSheet = false) }
-        // Simple logic for mission navigation - usually you'd pass type or id
-        postSideEffect(QuestRecordSideEffect.NavigateToMission(emotion.level.toString()))
+        postSideEffect(QuestRecordSideEffect.NavigateToMission(emotion.level, recordId))
     }
 }

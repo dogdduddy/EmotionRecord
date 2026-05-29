@@ -15,13 +15,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.jim.emotionrecord.domain.usecase.DecideStartDestinationUseCase
 import com.jim.emotionrecord.domain.usecase.StartDestination
 import com.jim.emotionrecord.quest.ui.QuestRouterScreen
 import com.jim.emotionrecord.quest.ui.map.QuestMapScreen
+import com.jim.emotionrecord.quest.ui.mission.MissionBreathScreen
+import com.jim.emotionrecord.quest.ui.mission.MissionGratitudeScreen
+import com.jim.emotionrecord.quest.ui.mission.MissionWarmScreen
 import com.jim.emotionrecord.quest.ui.record.QuestRecordScreen
 import com.jim.emotionrecord.ui.graph.GraphScreen
 import com.jim.emotionrecord.ui.home.HomeScreen
@@ -129,12 +134,16 @@ class MainActivity : ComponentActivity() {
                                         popUpTo(Screen.QuestRecord.route) { inclusive = true }
                                     }
                                 },
-                                onNavigateToMission = { level ->
-                                    val route = when (level.toIntOrNull()) {
-                                        1, 2 -> Screen.QuestMissionBreath.route
-                                        3 -> Screen.QuestMissionGratitude.route.replace("{question}", "작은 성취")
-                                        4, 5 -> Screen.QuestMissionGratitude.route.replace("{question}", "감사한 것")
-                                        else -> Screen.QuestMissionWarm.route
+                                onNavigateToMission = { level, recordId ->
+                                    val route = when (level) {
+                                        1, 2 -> Screen.QuestMissionBreath.route.replace("{recordId}", recordId.toString())
+                                        3 -> Screen.QuestMissionGratitude.route
+                                            .replace("{recordId}", recordId.toString())
+                                            .replace("{question}", "작은 성취")
+                                        4, 5 -> Screen.QuestMissionGratitude.route
+                                            .replace("{recordId}", recordId.toString())
+                                            .replace("{question}", "감사한 것")
+                                        else -> Screen.QuestMissionWarm.route.replace("{recordId}", recordId.toString())
                                     }
                                     navController.navigate(route)
                                 },
@@ -150,18 +159,55 @@ class MainActivity : ComponentActivity() {
                         }
 
                         // ── 퀘스트 미션 ──────────────────────────────────
-                        composable(Screen.QuestMissionBreath.route) {
-                            // TODO: MissionBreathScreen (STEP 5)
-                            Box(modifier = Modifier.fillMaxSize().background(QBg))
+                        composable(
+                            route = Screen.QuestMissionBreath.route,
+                            arguments = listOf(navArgument("recordId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val recordId = backStackEntry.arguments?.getString("recordId")?.toLongOrNull() ?: -1L
+                            MissionBreathScreen(
+                                recordId = recordId,
+                                onNavigateToMap = {
+                                    navController.navigate(Screen.QuestMap.route) {
+                                        popUpTo(Screen.QuestMap.route) { inclusive = true }
+                                    }
+                                },
+                                onNavigateBack = { navController.popBackStack() }
+                            )
                         }
-                        composable(Screen.QuestMissionGratitude.route) { backStackEntry ->
+                        composable(
+                            route = Screen.QuestMissionGratitude.route,
+                            arguments = listOf(
+                                navArgument("recordId") { type = NavType.StringType },
+                                navArgument("question") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val recordId = backStackEntry.arguments?.getString("recordId")?.toLongOrNull() ?: -1L
                             val question = backStackEntry.arguments?.getString("question") ?: "감사한 것"
-                            // TODO: MissionGratitudeScreen (STEP 5)
-                            Box(modifier = Modifier.fillMaxSize().background(QBg))
+                            MissionGratitudeScreen(
+                                recordId = recordId,
+                                question = question,
+                                onNavigateToMap = {
+                                    navController.navigate(Screen.QuestMap.route) {
+                                        popUpTo(Screen.QuestMap.route) { inclusive = true }
+                                    }
+                                },
+                                onNavigateBack = { navController.popBackStack() }
+                            )
                         }
-                        composable(Screen.QuestMissionWarm.route) {
-                            // TODO: MissionWarmScreen (STEP 5)
-                            Box(modifier = Modifier.fillMaxSize().background(QBg))
+                        composable(
+                            route = Screen.QuestMissionWarm.route,
+                            arguments = listOf(navArgument("recordId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val recordId = backStackEntry.arguments?.getString("recordId")?.toLongOrNull() ?: -1L
+                            MissionWarmScreen(
+                                recordId = recordId,
+                                onNavigateToMap = {
+                                    navController.navigate(Screen.QuestMap.route) {
+                                        popUpTo(Screen.QuestMap.route) { inclusive = true }
+                                    }
+                                },
+                                onNavigateBack = { navController.popBackStack() }
+                            )
                         }
                     }
                 }

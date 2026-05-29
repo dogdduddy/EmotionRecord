@@ -47,7 +47,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 fun QuestRecordScreen(
     fromMap: Boolean = false,
     onNavigateToMap: () -> Unit = {},
-    onNavigateToMission: (String) -> Unit = {},
+    onNavigateToMission: (Int, Long) -> Unit = { _, _ -> },
     onClose: () -> Unit = {},
     viewModel: QuestRecordViewModel = hiltViewModel(),
 ) {
@@ -56,7 +56,7 @@ fun QuestRecordScreen(
     viewModel.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is QuestRecordSideEffect.NavigateToMap -> onNavigateToMap()
-            is QuestRecordSideEffect.NavigateToMission -> onNavigateToMission(sideEffect.missionId)
+            is QuestRecordSideEffect.NavigateToMission -> onNavigateToMission(sideEffect.level, sideEffect.recordId)
         }
     }
 
@@ -205,7 +205,7 @@ fun FaceRow(
                 }
 
                 Text(
-                    text = emotion.level.toString(),
+                    text = emotion.label,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isSelected) qEmoInk(emotion.level) else QText3.copy(alpha = opacity)
