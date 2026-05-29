@@ -250,8 +250,8 @@ private fun MapContent(sections: List<SectionData>, justStamped: Boolean) {
                 .height(totalH),
         ) {
             sections.forEachIndexed { sIdx, section ->
-                // 섹션 시작 리본 (각 섹션 하단)
-                val ribbonY = totalH - PAD_BOT - sectionH * sIdx - 10.dp
+                // 섹션 시작 리본 (각 섹션 하단, Monday 스탬프 아래쪽)
+                val ribbonY = totalH - PAD_BOT - sectionH * sIdx + 60.dp
                 SectionStartRibbon(
                     weekNumber = section.weekNumber,
                     modifier   = Modifier
