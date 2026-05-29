@@ -15,13 +15,23 @@ enum class MissionType {
 object MissionProvider {
     fun getMissionForEmotion(level: Int): Mission {
         return when (level) {
-            1, 2 -> Mission(
-                id = "breath_1",
-                title = "3분 가이드 호흡",
-                description = "잠시 숨을 고르며 마음을 가라앉혀보세요.",
-                icon = "breath",
-                type = MissionType.BREATH
-            )
+            1, 2 -> listOf(
+                Mission(
+                    id = "warm_1",
+                    title = "따뜻한 한마디 받기",
+                    description = "오늘은 그저 쉬어가도 괜찮아요. 짧은 위로를 읽어볼래요?",
+                    icon = "warm",
+                    type = MissionType.WARM
+                ),
+                Mission(
+                    id = "breath_1",
+                    title = "3분 가이드 호흡",
+                    description = "잠시 숨을 고르며 마음을 가라앉혀보세요.",
+                    icon = "breath",
+                    type = MissionType.BREATH
+                )
+            ).random()
+
             3 -> Mission(
                 id = "achievement_1",
                 title = "작은 성취 기록",
